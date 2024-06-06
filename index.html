@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族チャット</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <h1>家族チャット</h1>
+    <!-- コンテンツ表示画面 -->
+    <div>
+        <!-- 各場所にidを設定しましょう -->
+        <div>
+            <input id="uname" type="text" placeholder="名前を入力してください">
+        </div>
+        <div>
+            <textarea id="text" placeholder="文章を入力してください"></textarea>
+        </div>
+        <button id="send">送信</button>
+        <!-- style.cssに "overflow: auto;"を書いてみましょう！※最後に -->
+        <div id="output"></div>
+        <button id="clear">削除</button>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+            from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            databaseURL: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+            };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+        //データ登録(Click)
+
+        $("#send").on("click",function(){
+            const uname = $("#uname").val();
+            const text = $("#text").val();
+
+        //データの塊
+        const msg = {
+                uname:  $('#uname').val(),
+                text:  $("#text").val(),
+            }
+         // 送信処理
+            const newPostRef = push(dbRef)
+            set(newPostRef, msg)
+
+            // 送信後に入力欄を空にする
+            $('#uname').val("");
+            $("#text").val("");  
+
+        })
+
+        //データ登録(Enter)
+
+        //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+        onChildAdded(dbRef, function(data){
+            const msg = data.val();
+            console.log(msg, 'データの中身')
+            const key = data.key;
+            console.log(key, '鍵の名前')
+
+            // htmlとして埋め込みたいのでテンプレートリテラル(es6の書き方)を使います🤗
+            let html = `
+                <div class="msg">
+                    <p>${msg.uname}</p>
+                    <p>${msg.text}</p>
+                </div>
+            `
+            //#outputの最後に追加
+            $("#output").append(html);
+
+        })
+
+            //2.clear クリックイベント
+
+    $("#clear").on("click",function(){
+        // アラートを表示して削除確認
+        const confirmation = confirm("本当に削除しますか？");
+        if (confirmation) {
+      remove(dbRef);
+      $("#output").empty();
+      }
+    });
+
+        
+    </script>
+</body>
+
+</html>
